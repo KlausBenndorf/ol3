@@ -12,9 +12,8 @@ goog.require('ol.events.Event');
 goog.require('ol.events.condition');
 goog.require('ol.geom.GeometryType');
 goog.require('ol.interaction.Interaction');
-goog.require('ol.layer.Vector');
+goog.require('ol.Collection');
 goog.require('ol.object');
-goog.require('ol.source.Vector');
 
 
 /**
@@ -140,7 +139,7 @@ ol.interaction.Select = function(opt_options) {
 
   /**
    * @private
-   * @type {ol.style.Style|null}
+   * @type {ol.style.Style|Array.<ol.style.Style>|ol.style.StyleFunction|null}
    */
   this.style_ = (options.style !== undefined) ? options.style :
       ol.interaction.Select.getDefaultStyleFunction();
@@ -149,7 +148,7 @@ ol.interaction.Select = function(opt_options) {
    * An association between selected feature (key)
    * and original style (value)
    * @private
-   * @type {Object.<number, ol.style.Style>}
+   * @type {Object.<number, ol.style.Style|Array.<ol.style.Style>|ol.FeatureStyleFunction>}
    */
   this.featureStyleAssociation_ = {};
 
@@ -260,16 +259,21 @@ ol.interaction.Select.prototype.getLayer = function(feature) {
 
 
 /**
- * @param {ol.Feature} feature
+ * @param {ol.Feature} feature Feature
  * @private
  */
-ol.interaction.Select.prototype.giveSelectedStyle_ = function (feature) {
+ol.interaction.Select.prototype.giveSelectedStyle_ = function(feature) {
   var key = goog.getUid(feature);
   this.featureStyleAssociation_[key] = feature.getStyle();
-  var style = this.style_;
-  feature.setStyle(function (resolution) {
-    return style(this, resolution);
-  });
+  if (goog.isFunction(this.style_)) {
+    /** @type {ol.style.StyleFunction} */
+    var style = this.style_;
+    feature.setStyle(function(resolution) {
+      return style(this, resolution);
+    });
+  } else {
+    feature.setStyle(this.style_);
+  }
 };
 
 
@@ -344,11 +348,11 @@ ol.interaction.Select.handleEvent = function(mapBrowserEvent) {
         function(feature, layer) {
           if (this.filter_(feature, layer)) {
             if ((add || toggle) &&
-              !ol.array.includes(features.getArray(), feature)) {
+                !ol.array.includes(features.getArray(), feature)) {
               selected.push(feature);
               this.addFeatureLayerAssociation_(feature, layer);
             } else if ((remove || toggle) &&
-              ol.array.includes(features.getArray(), feature)) {
+                ol.array.includes(features.getArray(), feature)) {
               deselected.push(feature);
               this.removeFeatureLayerAssociation_(feature);
             }
@@ -374,10 +378,10 @@ ol.interaction.Select.handleEvent = function(mapBrowserEvent) {
 
 
 /**
- * @param {ol.Feature} feature
+ * @param {ol.Feature} feature Feature
  * @private
  */
-ol.interaction.Select.prototype.removeSelectedStyle_ = function (feature) {
+ol.interaction.Select.prototype.removeSelectedStyle_ = function(feature) {
   var key = goog.getUid(feature);
   feature.setStyle(this.featureStyleAssociation_[key]);
   delete this.featureStyleAssociation_[key];

@@ -364,7 +364,7 @@ describe('ol.interaction.Select', function() {
     });
 
   });
-  
+
 });
 
 goog.require('ol.Collection');
