@@ -21,7 +21,8 @@
     "build-legacy": "rm -rf build && npm run build-index && rollup --config config/rollup.js && cleancss --source-map src/ol/ol.css -o build/ol.css",
     "copy-css": "cp src/ol/ol.css build/ol/ol.css",
     "transpile": "rm -rf build/ol && mkdir -p build && buble --input src/ol --output build/ol --no modules --sourcemap",
-    "apidoc": "jsdoc config/jsdoc/api/index.md -c config/jsdoc/api/conf.json -P package.json -d build/apidoc"
+    "apidoc": "jsdoc config/jsdoc/api/index.md -c config/jsdoc/api/conf.json -P package.json -d build/apidoc",
+    "dist": "npm run build-legacy && cp -r build dist"
   },
   "main": "index.js",
   "repository": {

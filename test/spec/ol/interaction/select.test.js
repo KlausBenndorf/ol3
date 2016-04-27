@@ -10,9 +10,12 @@ import Select from '../../../../src/ol/interaction/Select.js';
 import VectorLayer from '../../../../src/ol/layer/Vector.js';
 import PointerEvent from '../../../../src/ol/pointer/PointerEvent.js';
 import VectorSource from '../../../../src/ol/source/Vector.js';
+import Style from '../../../../src/ol/style/Style.js';
+import Fill from '../../../../src/ol/style/Fill.js';
+import Stroke from '../../../../src/ol/style/Stroke.js';
 
 
-describe('ol.interaction.Select', function() {
+describe.only('ol.interaction.Select', function() {
   let target, map, layer, source;
 
   const width = 360;
@@ -222,7 +225,6 @@ describe('ol.interaction.Select', function() {
 
       let features = select.getFeatures();
       expect(features.getLength()).to.equal(4);
-      expect(select.getLayer(features.item(0))).to.equal(layer);
 
       // Select again to make sure the internal layer isn't reported
       simulateEvent('singleclick', 10, -20);
@@ -231,7 +233,6 @@ describe('ol.interaction.Select', function() {
 
       features = select.getFeatures();
       expect(features.getLength()).to.equal(4);
-      expect(select.getLayer(features.item(0))).to.equal(layer);
     });
   });
 
@@ -240,7 +241,16 @@ describe('ol.interaction.Select', function() {
 
     beforeEach(function() {
       select = new Select({
-        multi: true
+        multi: true,
+        style: new Style({
+          fill: new Fill({
+            color: 'black'
+          }),
+          stroke: new Stroke({
+            color: 'black',
+            width: 5
+          })
+        })
       });
       map.addInteraction(select);
     });
@@ -340,34 +350,6 @@ describe('ol.interaction.Select', function() {
     });
   });
 
-  describe('#getLayer(feature)', function() {
-    let interaction;
-
-    beforeEach(function() {
-      interaction = new Select();
-      map.addInteraction(interaction);
-    });
-    afterEach(function() {
-      map.removeInteraction(interaction);
-    });
-
-    it('returns a layer from a selected feature', function() {
-      const listenerSpy = sinon.spy(function(e) {
-        const feature = e.selected[0];
-        const layer_ = interaction.getLayer(feature);
-        expect(e.selected).to.have.length(1);
-        expect(feature).to.be.a(Feature);
-        expect(layer_).to.be.a(VectorLayer);
-        expect(layer_).to.equal(layer);
-      });
-      interaction.on('select', listenerSpy);
-
-      simulateEvent('singleclick', 10, -20);
-      // Select again to make sure that the internal layer doesn't get reported.
-      simulateEvent('singleclick', 10, -20);
-    });
-  });
-
   describe('#setActive()', function() {
     let interaction;
 
@@ -377,8 +359,6 @@ describe('ol.interaction.Select', function() {
       expect(interaction.getActive()).to.be(true);
 
       map.addInteraction(interaction);
-
-      expect(interaction.featureOverlay_).not.to.be(null);
 
       simulateEvent('singleclick', 10, -20);
     });
@@ -406,47 +386,5 @@ describe('ol.interaction.Select', function() {
       });
     });
 
-  });
-
-  describe('#setMap()', function() {
-    let interaction;
-
-    beforeEach(function() {
-      interaction = new Select();
-      expect(interaction.getActive()).to.be(true);
-    });
-
-    describe('#setMap(null)', function() {
-      beforeEach(function() {
-        map.addInteraction(interaction);
-      });
-      afterEach(function() {
-        map.removeInteraction(interaction);
-      });
-      describe('#setMap(null) when interaction is active', function() {
-        it('unsets the map from the feature overlay', function() {
-          const spy = sinon.spy(interaction.featureOverlay_, 'setMap');
-          interaction.setMap(null);
-          expect(spy.getCall(0).args[0]).to.be(null);
-        });
-      });
-    });
-
-    describe('#setMap(map)', function() {
-      describe('#setMap(map) when interaction is active', function() {
-        it('sets the map into the feature overlay', function() {
-          const spy = sinon.spy(interaction.featureOverlay_, 'setMap');
-          interaction.setMap(map);
-          expect(spy.getCall(0).args[0]).to.be(map);
-        });
-      });
-    });
-  });
-
-  describe('#getOverlay', function() {
-    it('returns the feature overlay layer', function() {
-      const select = new Select();
-      expect (select.getOverlay()).to.eql(select.featureOverlay_);
-    });
   });
 });
