@@ -10,10 +10,8 @@ import {singleClick, never, shiftKeyOnly, pointerMove} from '../events/condition
 import {TRUE} from '../functions.js';
 import GeometryType from '../geom/GeometryType.js';
 import Interaction from '../interaction/Interaction.js';
-import VectorLayer from '../layer/Vector.js';
-import {clear} from '../obj.js';
-import VectorSource from '../source/Vector.js';
 import {createEditingStyle} from '../style/Style.js';
+import Collection from '../Collection.js';
 
 
 /**
@@ -206,23 +204,27 @@ const Select = function(opt_options) {
    */
   this.hitTolerance_ = options.hitTolerance ? options.hitTolerance : 0;
 
-  const featureOverlay = new VectorLayer({
-    source: new VectorSource({
-      useSpatialIndex: false,
-      features: options.features,
-      wrapX: options.wrapX
-    }),
-    style: options.style ? options.style :
-      getDefaultStyleFunction(),
-    updateWhileAnimating: true,
-    updateWhileInteracting: true
-  });
+  const style = options.style !== undefined ? options.style : getDefaultStyleFunction();
 
   /**
    * @private
-   * @type {module:ol/layer/Vector}
+   * @type {module:ol/style/Style|Array.<module:ol/style/Style>|module:ol/style/Style~StyleFunction}
    */
-  this.featureOverlay_ = featureOverlay;
+  this.style_ = style;
+
+  /**
+   * An association between selected feature (key)
+   * and original style (value)
+   * @private
+   * @type {Object.<number, module:ol/style/Style|Array.<module:ol/style/Style>|module:ol/style/Style~StyleFunction>}
+   */
+  this.featureStyleAssociation_ = {};
+
+  /**
+   * @private
+   * @type {module:ol/Collection}
+   */
+  this.features_ = options.features || new Collection();
 
   /** @type {function(module:ol/layer/Layer): boolean} */
   let layerFilter;
@@ -245,18 +247,9 @@ const Select = function(opt_options) {
    */
   this.layerFilter_ = layerFilter;
 
-  /**
-   * An association between selected feature (key)
-   * and layer (value)
-   * @private
-   * @type {Object.<number, module:ol/layer/Layer>}
-   */
-  this.featureLayerAssociation_ = {};
-
-  const features = this.featureOverlay_.getSource().getFeaturesCollection();
-  listen(features, CollectionEventType.ADD,
+  listen(this.features_, CollectionEventType.ADD,
     this.addFeature_, this);
-  listen(features, CollectionEventType.REMOVE,
+  listen(this.features_, CollectionEventType.REMOVE,
     this.removeFeature_, this);
 
 };
@@ -265,23 +258,12 @@ inherits(Select, Interaction);
 
 
 /**
- * @param {module:ol/Feature|module:ol/render/Feature} feature Feature.
- * @param {module:ol/layer/Layer} layer Layer.
- * @private
- */
-Select.prototype.addFeatureLayerAssociation_ = function(feature, layer) {
-  const key = getUid(feature);
-  this.featureLayerAssociation_[key] = layer;
-};
-
-
-/**
  * Get the selected features.
- * @return {module:ol/Collection.<module:ol/Feature>} Features collection.
+ * @return {module:ol/Collection.<module:ol/Feature|module:ol/render/Feature>} Features collection.
  * @api
  */
 Select.prototype.getFeatures = function() {
-  return this.featureOverlay_.getSource().getFeaturesCollection();
+  return this.features_;
 };
 
 
@@ -292,23 +274,6 @@ Select.prototype.getFeatures = function() {
  */
 Select.prototype.getHitTolerance = function() {
   return this.hitTolerance_;
-};
-
-
-/**
- * Returns the associated {@link module:ol/layer/Vector~Vector vectorlayer} of
- * the (last) selected feature. Note that this will not work with any
- * programmatic method like pushing features to
- * {@link module:ol/interaction/Select~Select#getFeatures collection}.
- * @param {module:ol/Feature|module:ol/render/Feature} feature Feature
- * @return {module:ol/layer/Vector} Layer.
- * @api
- */
-Select.prototype.getLayer = function(feature) {
-  const key = getUid(feature);
-  return (
-    /** @type {module:ol/layer/Vector} */ (this.featureLayerAssociation_[key])
-  );
 };
 
 
@@ -328,14 +293,13 @@ function handleEvent(mapBrowserEvent) {
   const toggle = this.toggleCondition_(mapBrowserEvent);
   const set = !add && !remove && !toggle;
   const map = mapBrowserEvent.map;
-  const features = this.featureOverlay_.getSource().getFeaturesCollection();
+  const features = this.features_;
   const deselected = [];
   const selected = [];
   if (set) {
     // Replace the currently selected feature(s) with the feature(s) at the
     // pixel, or clear the selected feature(s) if there is no feature at
     // the pixel.
-    clear(this.featureLayerAssociation_);
     map.forEachFeatureAtPixel(mapBrowserEvent.pixel,
       (
         /**
@@ -346,7 +310,6 @@ function handleEvent(mapBrowserEvent) {
         function(feature, layer) {
           if (this.filter_(feature, layer)) {
             selected.push(feature);
-            this.addFeatureLayerAssociation_(feature, layer);
             return !this.multi_;
           }
         }).bind(this), {
@@ -380,10 +343,8 @@ function handleEvent(mapBrowserEvent) {
           if (this.filter_(feature, layer)) {
             if ((add || toggle) && !includes(features.getArray(), feature)) {
               selected.push(feature);
-              this.addFeatureLayerAssociation_(feature, layer);
             } else if ((remove || toggle) && includes(features.getArray(), feature)) {
               deselected.push(feature);
-              this.removeFeatureLayerAssociation_(feature);
             }
             return !this.multi_;
           }
@@ -426,15 +387,12 @@ Select.prototype.setHitTolerance = function(hitTolerance) {
  */
 Select.prototype.setMap = function(map) {
   const currentMap = this.getMap();
-  const selectedFeatures =
-      this.featureOverlay_.getSource().getFeaturesCollection();
-  if (currentMap) {
-    selectedFeatures.forEach(currentMap.unskipFeature.bind(currentMap));
+  if (currentMap && this.style_) {
+    this.features_.forEach(this.removeSelectedStyle_.bind(this));
   }
   Interaction.prototype.setMap.call(this, map);
-  this.featureOverlay_.setMap(map);
-  if (map) {
-    selectedFeatures.forEach(map.skipFeature.bind(map));
+  if (map && this.style_) {
+    this.features_.forEach(this.giveSelectedStyle_.bind(this));
   }
 };
 
@@ -461,10 +419,31 @@ function getDefaultStyleFunction() {
  * @private
  */
 Select.prototype.addFeature_ = function(evt) {
-  const map = this.getMap();
-  if (map) {
-    map.skipFeature(/** @type {module:ol/Feature} */ (evt.element));
+  if (this.style_) {
+    this.giveSelectedStyle_(/** @type {module:ol/Feature} */ (evt.element));
   }
+};
+
+
+/**
+ * @param {module:ol/Feature|module:ol/render/Feature} feature Feature
+ * @private
+ */
+Select.prototype.giveSelectedStyle_ = function(feature) {
+  const key = getUid(feature);
+  this.featureStyleAssociation_[key] = feature.getStyle();
+  feature.setStyle(this.style_);
+};
+
+
+/**
+ * @param {module:ol/Feature|module:ol/render/Feature} feature Feature
+ * @private
+ */
+Select.prototype.removeSelectedStyle_ = function(feature) {
+  const key = getUid(feature);
+  feature.setStyle(this.featureStyleAssociation_[key]);
+  delete this.featureStyleAssociation_[key];
 };
 
 
@@ -473,20 +452,41 @@ Select.prototype.addFeature_ = function(evt) {
  * @private
  */
 Select.prototype.removeFeature_ = function(evt) {
-  const map = this.getMap();
-  if (map) {
-    map.unskipFeature(/** @type {module:ol/Feature} */ (evt.element));
+  if (this.style_) {
+    this.removeSelectedStyle_(/** @type {ol.Feature} */ (evt.element));
   }
 };
 
 
 /**
- * @param {module:ol/Feature|module:ol/render/Feature} feature Feature.
- * @private
+ * Selects the given features and fires a select event.
+ * @param {Array.<module:ol/Feature|module:ol/render/Feature>} selected Features.
+ * @api stable
  */
-Select.prototype.removeFeatureLayerAssociation_ = function(feature) {
-  const key = getUid(feature);
-  delete this.featureLayerAssociation_[key];
+Select.prototype.select = function(selected) {
+  if (selected.length > 0) {
+    this.features_.extend(selected);
+    this.dispatchEvent(
+      new SelectEvent(SelectEventType.SELECT,
+        selected, [], null));
+  }
+};
+
+
+/**
+ * Deselects the given features and fires a select event.
+ * @param {Array.<module~ol/Feature|module:ol/render/Feature>} deselected Features.
+ * @api stable
+ */
+Select.prototype.deselect = function(deselected) {
+  if (deselected.length > 0) {
+    for (let i = deselected.length - 1; i >= 0; --i) {
+      this.features_.remove(deselected[i]);
+    }
+    this.dispatchEvent(
+      new SelectEvent(SelectEventType.SELECT,
+        [], deselected, null));
+  }
 };
 
 

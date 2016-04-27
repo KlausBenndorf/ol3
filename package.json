@@ -24,7 +24,8 @@
     "src-closure": "node tasks/transform-types",
     "pretypecheck": "npm run src-closure",
     "typecheck": "node tasks/typecheck",
-    "apidoc": "jsdoc config/jsdoc/api/index.md -c config/jsdoc/api/conf.json -P package.json -d build/apidoc"
+    "apidoc": "jsdoc config/jsdoc/api/index.md -c config/jsdoc/api/conf.json -P package.json -d build/apidoc",
+    "dist": "npm run build && cp -r build dist"
   },
   "main": "src/ol/index.js",
   "repository": {

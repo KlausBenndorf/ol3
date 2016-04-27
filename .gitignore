@@ -1,5 +1,5 @@
 /build/
 /coverage/
-/dist/
+.idea
 node_modules/
 src/index.js
