@@ -210,7 +210,6 @@ describe('ol.interaction.Select', function() {
 
       var features = select.getFeatures();
       expect(features.getLength()).to.equal(4);
-      expect(select.getLayer(features.item(0))).to.equal(layer);
 
       // Select again to make sure the internal layer isn't reported
       simulateEvent(ol.MapBrowserEvent.EventType.SINGLECLICK, 10, -20);
@@ -219,7 +218,6 @@ describe('ol.interaction.Select', function() {
 
       features = select.getFeatures();
       expect(features.getLength()).to.equal(4);
-      expect(select.getLayer(features.item(0))).to.equal(layer);
     });
   });
 
@@ -328,34 +326,6 @@ describe('ol.interaction.Select', function() {
     });
   });
 
-  describe('#getLayer(feature)', function() {
-    var interaction;
-
-    beforeEach(function() {
-      interaction = new ol.interaction.Select();
-      map.addInteraction(interaction);
-    });
-    afterEach(function() {
-      map.removeInteraction(interaction);
-    });
-
-    it('returns a layer from a selected feature', function() {
-      var listenerSpy = sinon.spy(function(e) {
-        var feature = e.selected[0];
-        var layer_ = interaction.getLayer(feature);
-        expect(e.selected).to.have.length(1);
-        expect(feature).to.be.a(ol.Feature);
-        expect(layer_).to.be.a(ol.layer.Vector);
-        expect(layer_).to.equal(layer);
-      });
-      interaction.on('select', listenerSpy);
-
-      simulateEvent(ol.MapBrowserEvent.EventType.SINGLECLICK, 10, -20);
-      // Select again to make sure that the internal layer doesn't get reported.
-      simulateEvent(ol.MapBrowserEvent.EventType.SINGLECLICK, 10, -20);
-    });
-  });
-
   describe('#setActive()', function() {
     var interaction;
 
@@ -365,8 +335,6 @@ describe('ol.interaction.Select', function() {
       expect(interaction.getActive()).to.be(true);
 
       map.addInteraction(interaction);
-
-      expect(interaction.featureOverlay_).not.to.be(null);
 
       simulateEvent(ol.MapBrowserEvent.EventType.SINGLECLICK, 10, -20);
     });
@@ -396,40 +364,6 @@ describe('ol.interaction.Select', function() {
 
   });
 
-  describe('#setMap()', function() {
-    var interaction;
-
-    beforeEach(function() {
-      interaction = new ol.interaction.Select();
-      expect(interaction.getActive()).to.be(true);
-    });
-
-    describe('#setMap(null)', function() {
-      beforeEach(function() {
-        map.addInteraction(interaction);
-      });
-      afterEach(function() {
-        map.removeInteraction(interaction);
-      });
-      describe('#setMap(null) when interaction is active', function() {
-        it('unsets the map from the feature overlay', function() {
-          var spy = sinon.spy(interaction.featureOverlay_, 'setMap');
-          interaction.setMap(null);
-          expect(spy.getCall(0).args[0]).to.be(null);
-        });
-      });
-    });
-
-    describe('#setMap(map)', function() {
-      describe('#setMap(map) when interaction is active', function() {
-        it('sets the map into the feature overlay', function() {
-          var spy = sinon.spy(interaction.featureOverlay_, 'setMap');
-          interaction.setMap(map);
-          expect(spy.getCall(0).args[0]).to.be(map);
-        });
-      });
-    });
-  });
 });
 
 goog.require('ol.Collection');
