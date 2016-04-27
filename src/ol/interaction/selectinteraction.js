@@ -102,28 +102,28 @@ ol.interaction.Select = function(opt_options) {
    * @type {ol.events.ConditionType}
    */
   this.condition_ = options.condition ?
-    options.condition : ol.events.condition.singleClick;
+      options.condition : ol.events.condition.singleClick;
 
   /**
    * @private
    * @type {ol.events.ConditionType}
    */
   this.addCondition_ = options.addCondition ?
-    options.addCondition : ol.events.condition.never;
+      options.addCondition : ol.events.condition.never;
 
   /**
    * @private
    * @type {ol.events.ConditionType}
    */
   this.removeCondition_ = options.removeCondition ?
-    options.removeCondition : ol.events.condition.never;
+      options.removeCondition : ol.events.condition.never;
 
   /**
    * @private
    * @type {ol.events.ConditionType}
    */
   this.toggleCondition_ = options.toggleCondition ?
-    options.toggleCondition : ol.events.condition.shiftKeyOnly;
+      options.toggleCondition : ol.events.condition.shiftKeyOnly;
 
   /**
    * @private
@@ -136,20 +136,14 @@ ol.interaction.Select = function(opt_options) {
    * @type {ol.interaction.SelectFilterFunction}
    */
   this.filter_ = options.filter ? options.filter :
-    ol.functions.TRUE;
+      ol.functions.TRUE;
 
   /**
    * @private
-   * @type {ol.style.Style}
+   * @type {ol.style.Style|null}
    */
-  this.style_ = options.style ? options.style :
-    ol.interaction.Select.getDefaultStyleFunction();
-
-  /**
-   * @type {boolean}
-   * @private
-   */
-  this.dontStyle_ = options.dontStyle ? options.dontStyle : false;
+  this.style_ = (options.style !== undefined) ? options.style :
+      ol.interaction.Select.getDefaultStyleFunction();
 
   /**
    * An association between selected feature (key)
@@ -221,7 +215,7 @@ ol.interaction.Select.prototype.addFeature_ = function(evt) {
   var feature = evt.element;
   goog.asserts.assertInstanceof(feature, ol.Feature,
     'feature should be an ol.Feature');
-  if (!this.dontStyle_) {
+  if (this.style_) {
     this.giveSelectedStyle_(feature);
   }
 };
@@ -259,7 +253,7 @@ ol.interaction.Select.prototype.getFeatures = function() {
  */
 ol.interaction.Select.prototype.getLayer = function(feature) {
   goog.asserts.assertInstanceof(feature, ol.Feature,
-    'feature should be an ol.Feature');
+      'feature should be an ol.Feature');
   var key = goog.getUid(feature);
   return /** @type {ol.layer.Vector} */ (this.featureLayerAssociation_[key]);
 };
@@ -306,20 +300,20 @@ ol.interaction.Select.handleEvent = function(mapBrowserEvent) {
     // the pixel.
     ol.object.clear(this.featureLayerAssociation_);
     map.forEachFeatureAtPixel(mapBrowserEvent.pixel,
-      /**
-       * @param {ol.Feature|ol.render.Feature} feature Feature.
-       * @param {ol.layer.Layer} layer Layer.
-       * @return {boolean|undefined} Continue to iterate over the features.
-       */
-      function(feature, layer) {
-        if (this.filter_(feature, layer)) {
-          selected.push(feature);
-          this.addFeatureLayerAssociation_(feature, layer);
-          return !this.multi_;
-        }
-      }, this, this.layerFilter_);
+        /**
+         * @param {ol.Feature|ol.render.Feature} feature Feature.
+         * @param {ol.layer.Layer} layer Layer.
+         * @return {boolean|undefined} Continue to iterate over the features.
+         */
+        function(feature, layer) {
+          if (this.filter_(feature, layer)) {
+            selected.push(feature);
+            this.addFeatureLayerAssociation_(feature, layer);
+            return !this.multi_;
+          }
+        }, this, this.layerFilter_);
     if (selected.length > 0 && features.getLength() == 1 &&
-      features.item(0) == selected[0]) {
+        features.item(0) == selected[0]) {
       // No change
     } else {
       change = true;
@@ -342,25 +336,25 @@ ol.interaction.Select.handleEvent = function(mapBrowserEvent) {
   } else {
     // Modify the currently selected feature(s).
     map.forEachFeatureAtPixel(mapBrowserEvent.pixel,
-      /**
-       * @param {ol.Feature|ol.render.Feature} feature Feature.
-       * @param {ol.layer.Layer} layer Layer.
-       * @return {boolean|undefined} Continue to iterate over the features.
-       */
-      function(feature, layer) {
-        if (this.filter_(feature, layer)) {
-          if ((add || toggle) &&
-            !ol.array.includes(features.getArray(), feature)) {
-            selected.push(feature);
-            this.addFeatureLayerAssociation_(feature, layer);
-          } else if ((remove || toggle) &&
-            ol.array.includes(features.getArray(), feature)) {
-            deselected.push(feature);
-            this.removeFeatureLayerAssociation_(feature);
+        /**
+         * @param {ol.Feature|ol.render.Feature} feature Feature.
+         * @param {ol.layer.Layer} layer Layer.
+         * @return {boolean|undefined} Continue to iterate over the features.
+         */
+        function(feature, layer) {
+          if (this.filter_(feature, layer)) {
+            if ((add || toggle) &&
+              !ol.array.includes(features.getArray(), feature)) {
+              selected.push(feature);
+              this.addFeatureLayerAssociation_(feature, layer);
+            } else if ((remove || toggle) &&
+              ol.array.includes(features.getArray(), feature)) {
+              deselected.push(feature);
+              this.removeFeatureLayerAssociation_(feature);
+            }
+            return !this.multi_;
           }
-          return !this.multi_;
-        }
-      }, this, this.layerFilter_);
+        }, this, this.layerFilter_);
     var i;
     for (i = deselected.length - 1; i >= 0; --i) {
       features.remove(deselected[i]);
@@ -372,8 +366,8 @@ ol.interaction.Select.handleEvent = function(mapBrowserEvent) {
   }
   if (change) {
     this.dispatchEvent(
-      new ol.interaction.SelectEvent(ol.interaction.SelectEventType.SELECT,
-        selected, deselected, mapBrowserEvent));
+        new ol.interaction.SelectEvent(ol.interaction.SelectEventType.SELECT,
+            selected, deselected, mapBrowserEvent));
   }
   return ol.events.condition.pointerMove(mapBrowserEvent);
 };
@@ -398,11 +392,11 @@ ol.interaction.Select.prototype.removeSelectedStyle_ = function (feature) {
  */
 ol.interaction.Select.prototype.setMap = function(map) {
   var currentMap = this.getMap();
-  if (currentMap && !this.dontStyle_) {
+  if (currentMap && this.style_) {
     this.features_.forEach(this.removeSelectedStyle_, this);
   }
   goog.base(this, 'setMap', map);
-  if (map && !this.dontStyle_) {
+  if (map && this.style_) {
     this.features_.forEach(this.giveSelectedStyle_, this);
   }
 };
@@ -414,9 +408,9 @@ ol.interaction.Select.prototype.setMap = function(map) {
 ol.interaction.Select.getDefaultStyleFunction = function() {
   var styles = ol.style.createDefaultEditingStyles();
   ol.array.extend(styles[ol.geom.GeometryType.POLYGON],
-    styles[ol.geom.GeometryType.LINE_STRING]);
+      styles[ol.geom.GeometryType.LINE_STRING]);
   ol.array.extend(styles[ol.geom.GeometryType.GEOMETRY_COLLECTION],
-    styles[ol.geom.GeometryType.LINE_STRING]);
+      styles[ol.geom.GeometryType.LINE_STRING]);
 
   return function(feature, resolution) {
     return styles[feature.getGeometry().getType()];
@@ -431,8 +425,8 @@ ol.interaction.Select.getDefaultStyleFunction = function() {
 ol.interaction.Select.prototype.removeFeature_ = function(evt) {
   var feature = evt.element;
   goog.asserts.assertInstanceof(feature, ol.Feature,
-    'feature should be an ol.Feature');
-  if (!this.dontStyle_) {
+      'feature should be an ol.Feature');
+  if (this.style_) {
     this.removeSelectedStyle_(feature);
   }
 };
