@@ -278,3 +278,7 @@ package:
 	@cp css/ol.css build/package
 	./node_modules/.bin/jscodeshift --transform transforms/module.js build/package
 	npm run lint-package
+
+distribute: build
+	@mkdir -p dist
+	@cp build/ol.css build/ol.js build/ol.js.map build/ol-debug.js dist
