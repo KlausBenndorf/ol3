@@ -300,3 +300,7 @@ build/test_rendering_requires.js: $(SPEC_RENDERING_JS)
 
 %shader.js: %shader.glsl src/ol/webgl/shader.mustache bin/pyglslunit.py build/timestamps/node-modules-timestamp
 	@python bin/pyglslunit.py --input $< | ./node_modules/.bin/mustache - src/ol/webgl/shader.mustache > $@
+
+distribute: build
+	@mkdir -p dist
+	@cp build/ol.css build/ol.js build/ol.js.map build/ol-debug.js dist

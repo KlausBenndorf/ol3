@@ -3046,7 +3046,7 @@ olx.interaction.SelectOptions.prototype.layers;
 
 /**
  * Style for the selected features. By default the default edit style is used
- * (see {@link ol.style}).
+ * (see {@link ol.style}). If set to null the selected features won't be styled
  * @type {ol.style.Style|Array.<ol.style.Style>|ol.StyleFunction|undefined}
  * @api
  */
