@@ -243,6 +243,25 @@ ol.interaction.Select.prototype.addFeatureLayerAssociation_ = function(feature, 
 
 
 /**
+ * Deselects the given features and fires a select event.
+ * @param {Array.<ol.Feature>} deselected Features.
+ * @api stable
+ */
+ol.interaction.Select.prototype.deselect = function(deselected) {
+  if (deselected.length > 0) {
+    var features = this.featureOverlay_.getSource().getFeaturesCollection();
+    var i;
+    for (i = deselected.length - 1; i >= 0; --i) {
+      features.remove(deselected[i]);
+    }
+    this.dispatchEvent(
+      new ol.interaction.SelectEvent(ol.interaction.SelectEventType.SELECT,
+        [], deselected, null));
+  }
+};
+
+
+/**
  * Get the selected features.
  * @return {ol.Collection.<ol.Feature>} Features collection.
  * @api stable
@@ -388,6 +407,22 @@ ol.interaction.Select.prototype.removeSelectedStyle_ = function(feature) {
   var key = goog.getUid(feature);
   feature.setStyle(this.featureStyleAssociation_[key]);
   delete this.featureStyleAssociation_[key];
+};
+
+
+/**
+ * Selects the given features and fires a select event.
+ * @param {Array.<ol.Feature>} selected Features.
+ * @api stable
+ */
+ol.interaction.Select.prototype.select = function(selected) {
+  if (selected.length > 0) {
+    var features = this.featureOverlay_.getSource().getFeaturesCollection();
+    features.extend(selected);
+    this.dispatchEvent(
+      new ol.interaction.SelectEvent(ol.interaction.SelectEventType.SELECT,
+        selected, [], null));
+  }
 };
 
 
