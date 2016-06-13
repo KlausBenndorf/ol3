@@ -249,10 +249,9 @@ ol.interaction.Select.prototype.addFeatureLayerAssociation_ = function(feature, 
  */
 ol.interaction.Select.prototype.deselect = function(deselected) {
   if (deselected.length > 0) {
-    var features = this.featureOverlay_.getSource().getFeaturesCollection();
     var i;
     for (i = deselected.length - 1; i >= 0; --i) {
-      features.remove(deselected[i]);
+      this.features_.remove(deselected[i]);
     }
     this.dispatchEvent(
       new ol.interaction.SelectEvent(ol.interaction.SelectEventType.SELECT,
@@ -417,8 +416,7 @@ ol.interaction.Select.prototype.removeSelectedStyle_ = function(feature) {
  */
 ol.interaction.Select.prototype.select = function(selected) {
   if (selected.length > 0) {
-    var features = this.featureOverlay_.getSource().getFeaturesCollection();
-    features.extend(selected);
+    this.features_.extend(selected);
     this.dispatchEvent(
       new ol.interaction.SelectEvent(ol.interaction.SelectEventType.SELECT,
         selected, [], null));
