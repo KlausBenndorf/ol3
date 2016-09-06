@@ -12,7 +12,6 @@ goog.require('ol.geom.GeometryType');
 goog.require('ol.interaction.Interaction');
 goog.require('ol.style.Style');
 
-
 /**
  * @classdesc
  * Interaction for selecting vector features. By default, selected features are
