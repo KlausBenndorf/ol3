@@ -352,8 +352,6 @@ ol.interaction.Select.prototype.removeFeature_ = function(evt) {
   }
 };
 
-};
-
 
 /**
  * @classdesc
@@ -406,3 +404,4 @@ ol.interaction.Select.EventType = {
    * @api
    */
   SELECT: 'select'
+};
