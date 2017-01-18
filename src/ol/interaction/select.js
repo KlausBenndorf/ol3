@@ -388,8 +388,6 @@ ol.interaction.Select.prototype.removeFeature_ = function(evt) {
   }
 };
 
-};
-
 
 /**
  * @classdesc
