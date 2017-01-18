@@ -174,7 +174,7 @@ ol.interaction.Select.prototype.deselect = function(deselected) {
       this.features_.remove(deselected[i]);
     }
     this.dispatchEvent(
-      new ol.interaction.SelectEvent(ol.interaction.SelectEventType.SELECT,
+      new ol.interaction.Select.Event(ol.interaction.Select.EventType.SELECT,
         [], deselected, null));
   }
 };
@@ -336,7 +336,7 @@ ol.interaction.Select.prototype.select = function(selected) {
   if (selected.length > 0) {
     this.features_.extend(selected);
     this.dispatchEvent(
-      new ol.interaction.SelectEvent(ol.interaction.SelectEventType.SELECT,
+      new ol.interaction.Select.Event(ol.interaction.Select.EventType.SELECT,
         selected, [], null));
   }
 };
