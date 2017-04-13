@@ -304,3 +304,4 @@ build/test_rendering_requires.js: $(SPEC_RENDERING_JS)
 distribute: build
 	@mkdir -p dist
 	@cp build/ol.css build/ol.js build/ol.js.map build/ol-debug.js dist
+	
