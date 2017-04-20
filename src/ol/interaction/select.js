@@ -139,9 +139,9 @@ ol.interaction.Select = function(opt_options) {
    */
   this.layerFilter_ = layerFilter;
 
-  ol.events.listen(this.features_, ol.Collection.EventType.ADD,
+  ol.events.listen(this.features_, ol.CollectionEventType.ADD,
     this.addFeature_, this);
-  ol.events.listen(this.features_, ol.Collection.EventType.REMOVE,
+  ol.events.listen(this.features_, ol.CollectionEventType.REMOVE,
     this.removeFeature_, this);
 
 };
@@ -174,7 +174,7 @@ ol.interaction.Select.prototype.deselect = function(deselected) {
       this.features_.remove(deselected[i]);
     }
     this.dispatchEvent(
-      new ol.interaction.Select.Event(ol.interaction.Select.EventType.SELECT,
+      new ol.interaction.Select.Event(ol.interaction.Select.EventType_.SELECT,
         [], deselected, null));
   }
 };
@@ -334,7 +334,7 @@ ol.interaction.Select.prototype.select = function(selected) {
   if (selected.length > 0) {
     this.features_.extend(selected);
     this.dispatchEvent(
-      new ol.interaction.Select.Event(ol.interaction.Select.EventType.SELECT,
+      new ol.interaction.Select.Event(ol.interaction.Select.EventType_.SELECT,
         selected, [], null));
   }
 };
