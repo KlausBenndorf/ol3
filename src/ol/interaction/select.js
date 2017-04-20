@@ -11,6 +11,7 @@ goog.require('ol.functions');
 goog.require('ol.geom.GeometryType');
 goog.require('ol.interaction.Interaction');
 goog.require('ol.style.Style');
+goog.require('ol.Collection');
 
 /**
  * @classdesc
@@ -139,10 +140,10 @@ ol.interaction.Select = function(opt_options) {
    */
   this.layerFilter_ = layerFilter;
 
-  ol.events.listen(this.features_, ol.Collection.EventType.ADD,
-    this.addFeature_, this);
-  ol.events.listen(this.features_, ol.Collection.EventType.REMOVE,
-    this.removeFeature_, this);
+  ol.events.listen(this.features_, ol.CollectionEventType.ADD,
+      this.addFeature_, this);
+  ol.events.listen(this.features_, ol.CollectionEventType.REMOVE,
+      this.removeFeature_, this);
 
 };
 ol.inherits(ol.interaction.Select, ol.interaction.Interaction);
@@ -153,9 +154,7 @@ ol.inherits(ol.interaction.Select, ol.interaction.Interaction);
  * @private
  */
 ol.interaction.Select.prototype.addFeature_ = function(evt) {
-  var feature = evt.element;
-  goog.asserts.assertInstanceof(feature, ol.Feature,
-    'feature should be an ol.Feature');
+  var feature = /** @type {ol.Feature} */ (evt.element);
   if (this.style_) {
     this.giveSelectedStyle_(feature);
   }
@@ -174,8 +173,8 @@ ol.interaction.Select.prototype.deselect = function(deselected) {
       this.features_.remove(deselected[i]);
     }
     this.dispatchEvent(
-      new ol.interaction.Select.Event(ol.interaction.Select.EventType.SELECT,
-        [], deselected, null));
+        new ol.interaction.Select.Event(ol.interaction.Select.EventType_.SELECT,
+            [], deselected, null));
   }
 };
 
@@ -336,8 +335,8 @@ ol.interaction.Select.prototype.select = function(selected) {
   if (selected.length > 0) {
     this.features_.extend(selected);
     this.dispatchEvent(
-      new ol.interaction.Select.Event(ol.interaction.Select.EventType.SELECT,
-        selected, [], null));
+        new ol.interaction.Select.Event(ol.interaction.Select.EventType_.SELECT,
+            selected, [], null));
   }
 };
 
