@@ -3,15 +3,11 @@ import Map from '../../../../src/ol/Map.js';
 import View from '../../../../src/ol/View.js';
 import Layer from '../../../../src/ol/layer/Layer.js';
 import TileLayer from '../../../../src/ol/layer/Tile.js';
-import VectorLayer from '../../../../src/ol/layer/Vector.js';
+import ImageLayer from '../../../../src/ol/layer/Image.js';
 import LayerRenderer from '../../../../src/ol/renderer/Layer.js';
 import XYZ from '../../../../src/ol/source/XYZ.js';
 import {fromKey} from '../../../../src/ol/tilecoord.js';
-import {Vector} from '../../../../src/ol/source.js';
-import Point from '../../../../src/ol/geom/Point.js';
-import Feature from '../../../../src/ol/Feature.js';
-import Style from '../../../../src/ol/style/Style.js';
-import Icon from '../../../../src/ol/style/Icon.js';
+import Static from '../../../../src/ol/source/ImageStatic.js';
 
 const redPixel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQYV2P4z8Dw'
   + 'HwAFAAH/plybXQAAAABJRU5ErkJggg==';
@@ -152,45 +148,34 @@ describe('ol.renderer.Layer', function() {
     });
   });
 
-  describe('getRenderedPixelFromCoordinate', function() {
-    let target, map, view, layer;
+  describe('getRenderedPixelFromViewportPixel', function() {
+    let target, map, layer;
 
     beforeEach(function(done) {
       target = document.createElement('div');
       Object.assign(target.style, {
-        position: 'absolute',
-        left: '-1000px',
-        top: '-1000px',
         width: '100px',
         height: '100px'
       });
       document.body.appendChild(target);
 
-      view = new View({
-        center: [0, 0],
-        multiWorld: true,
-        zoom: 17
-      });
-
-      layer = new VectorLayer({
-        source: new Vector({
-          features: [
-            new Feature(new Point([2, 0]))
-          ]
-        }),
-        style: new Style({
-          image: new Icon({
-            src: redPixel
-          })
+      layer = new ImageLayer({
+        source: new Static({
+          url: redPixel,
+          imageExtent: [-100, -100, 100, 100]
         })
       });
 
       map = new Map({
         target: target,
-        view: view,
+        view: new View({
+          zoom: 12,
+          center: [1000, 0]
+        }),
         layers: [layer]
       });
-      map.once('postrender', function() {
+
+      layer.getSource().on('imageloadend', function () {
         done();
       });
     });
@@ -200,15 +185,31 @@ describe('ol.renderer.Layer', function() {
       document.body.removeChild(target);
     });
 
-    it('gets the correct rendered pixel', function(done) {
-      map.getView().setRotation(0.413);
+    it('returns viewport pixel if not rotated', function(done) {
       map.renderSync();
-      const viewPortPixel = map.getPixelFromCoordinate([2, 0]);
-      const renderedPixel = layer.getRenderedPixelFromViewportPixel(viewPortPixel);
-      const layerCanvas = map.getViewport().querySelector('.ol-layer canvas');
+      const layerCanvas = target.querySelector('canvas');
       const context = layerCanvas.getContext('2d');
+      const viewPortPixel = map.getPixelFromCoordinate([0, 0]);
+      const renderedPixel = layer.getRenderedPixelFromViewportPixel(viewPortPixel);
       const imageData = context.getImageData(renderedPixel[0], renderedPixel[1], 1, 1);
-      expect(imageData[0]).to.be.equal(255);
+      expect(viewPortPixel[0]).to.be.equal(renderedPixel[0]);
+      expect(viewPortPixel[1]).to.be.equal(renderedPixel[1]);
+      expect(imageData.data[0]).to.be.equal(255);
+      done();
+    });
+
+    it('returns the correct pixel on the rotated canvas', function(done) {
+      map.getView().setRotation(2);
+      map.renderSync();
+      const layerCanvas = target.querySelector('canvas');
+      const context = layerCanvas.getContext('2d');
+      const viewPortPixel = map.getPixelFromCoordinate([0, 0]);
+      const renderedPixel = layer.getRenderedPixelFromViewportPixel(viewPortPixel);
+      let imageData = context.getImageData(viewPortPixel[0], viewPortPixel[1], 1, 1);
+      expect(imageData.data[0]).not.to.be.equal(255);
+      imageData = context.getImageData(renderedPixel[0], renderedPixel[1], 1, 1);
+      expect(imageData.data[0]).to.be.equal(255);
+      done();
     });
   });
 });
