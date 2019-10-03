@@ -152,12 +152,12 @@ class Layer extends BaseLayer {
   }
 
   /**
-   * Gets the corresponding pixel on the rendered canvas for the given viewport pixel.
-   * @param {import("../pixel.js").Pixel} pixel Pixel.
-   * @return {import("../pixel.js").Pixel}
+   * Gets the pixel on the rendered canvas for the given viewport pixel.
+   * @param {import("../pixel.js").Pixel} pixel Viewport pixel.
+   * @return {import("../pixel.js").Pixel} Rendered pixel.
    */
   getRenderedPixelFromViewportPixel(pixel) {
-    return pixel;
+    return this.getRenderer().getRenderedPixel(pixel);
   }
 
   /**

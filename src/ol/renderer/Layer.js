@@ -119,6 +119,15 @@ class LayerRenderer extends Observable {
   }
 
   /**
+   * @abstract
+   * @param {import("../pixel.js").Pixel} viewportPixel Pixel on the viewport.
+   * @return {import("../pixel.js").Pixel} Pixel on the rendered canvas.
+   */
+  getRenderedPixel(viewportPixel) {
+    return abstract();
+  }
+
+  /**
    * Perform action necessary to get the layer rendered after new fonts have loaded
    * @abstract
    */

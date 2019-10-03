@@ -261,6 +261,12 @@ class CanvasLayerRenderer extends LayerRenderer {
     return data;
   }
 
+  /**
+   * @inheritDoc
+   */
+  getRenderedPixel(viewportPixel) {
+    return applyTransform(this.inversePixelTransform, viewportPixel.slice());
+  }
 }
 
 export default CanvasLayerRenderer;
