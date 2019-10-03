@@ -117,7 +117,9 @@ raster.on('beforeoperations', function(event) {
   const data = event.data;
   data.delta = thresholdControl.value;
   if (coordinate) {
-    data.pixel = map.getPixelFromCoordinate(coordinate);
+    const viewportPixel = map.getPixelFromCoordinate(coordinate);
+    data.pixel = rasterImage.getRenderedPixelFromViewportPixel(viewportPixel);
+    coordinate = undefined;
   }
 });
 
